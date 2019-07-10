@@ -1,3 +1,5 @@
+import copy
+
 table = """
 ╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗
 ║   │ 4 │ 1 ║ 6 │   │   ║ 3 │   │ 5 ║
@@ -67,9 +69,9 @@ class GridPoint:
         self.table = table
         self._index = index
         self._possible_values = set()
-        self.square = None
-        self.row = None
-        self.column = None
+        self.square_index = None
+        self.row_index = None
+        self.column_index = None
         self.find_intersections()
 
     def find_intersections(self):
@@ -77,9 +79,9 @@ class GridPoint:
         Given the point on the grid, this function calculates the row, column
         and square the point belongs to
         """
-        self.square = self._find_square()
-        self.row = self._find_row()
-        self.column = self._find_column()
+        self.square_index = self._find_square()
+        self.row_index = self._find_row()
+        self.column_index = self._find_column()
 
     def _find_square(self):
         if 9 >= self._index >= 1:
@@ -155,7 +157,10 @@ class GridPoint:
 
     @property
     def is_set(self):
-        return bool(self.value)
+        """
+        Return True if a number is set for this cell, False otherwise.
+        """
+        return bool(self.table[self.index])
 
     def set_value(self, value):
         self.table[self.index] = value
@@ -245,6 +250,33 @@ def find_and_fill_one_missing_value(objects):
                     value = list(obj.missing_values)[0]
                     print(f'Setting value for point {point.index} to {value}')
                     point.set_value()
+
+
+def find_all_possibilities_for_all_grid_points(lines, columns, squares):
+    """
+    Call this once before starting solving the puzzle, it will find for every free cell
+    all possible number that can fit.
+    """
+    for _, line in line.items():
+        for el in line._elements:
+            find_all_possible_values_for_grid_point(el)
+
+
+def find_all_possible_values_for_grid_point(grid_point, columns, squares, lines):
+    if not grid_point.is_set:
+        # find numbers that fit
+        column = columns[grid_point.column_index]
+        square = squares[grid_point.square_index]
+        line = lines[grid_point.row_index]
+        missing_on_row = set(line.missing_values)
+
+        # Create a copy of the possible number set to remove eventually found numbers
+        possible_values = copy.copy(missing_on_row)
+        for value in missing_on_row:
+            if value in column.values or value in square.values:
+                # remove from the possible numbers
+                possible_values.discard(value)
+        grid_point._possible_values = possible_values
 
 
 def main():
